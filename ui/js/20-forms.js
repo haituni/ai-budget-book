@@ -200,6 +200,10 @@ async function openSmartExpenseModal(initialText = '') {
               <button type="button" class="link-btn danger" data-act="remove-smart-row">移除</button>
               <div class="smart-entry-reason">第 ${index + 1} 笔 · ${esc(item.reason)}${item.confidence ? ` · 分类置信度${esc(item.confidence)}` : ''}</div>
             </div>`).join('');
+          // 账单列表在弹窗下半部分：手机/矮屏上先把它滚进可视区，
+          // 否则会出现「点了解析却看不到生成的账单」
+          const firstRow = rowsBox.querySelector('.smart-entry-row');
+          if (firstRow) firstRow.scrollIntoView({ block: 'nearest' });
           warningBox.textContent = (result.warnings || []).join('；');
         } catch (err) {
           rowsBox.innerHTML = '';
