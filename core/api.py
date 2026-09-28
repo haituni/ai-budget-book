@@ -12,12 +12,20 @@ import subprocess
 import sys
 from pathlib import Path
 
-import webview
+try:  # pywebview 只有桌面端才有；Android 版由原生桥直接调用下面这些方法
+    import webview
+except ImportError:  # pragma: no cover - Android 上没有 pywebview
+    webview = None  # type: ignore[assignment]
 
 from . import ai, assistant, intelligence as intelligence_engine, memory, repo, service
 from .db import BASE_DIR, DATA_DIR, DB_PATH
 
 EXPORT_DIR = DATA_DIR / "exports"
+
+# 安卓端由 android_entry.py 设置 LEDGER_ANDROID=1；这里给桌面端保持原行为。
+IS_ANDROID = bool(os.environ.get("LEDGER_ANDROID")) or (
+    sys.platform == "linux" and "ANDROID_ROOT" in os.environ
+)
 
 
 def _safe(func):
@@ -280,8 +288,11 @@ class Api:
 
     @_safe
     def open_data_folder(self):
-        """在资源管理器中打开数据目录。"""
+        """在资源管理器中打开数据目录。Android 上没有资源管理器，直接返回路径。"""
         DATA_DIR.mkdir(parents=True, exist_ok=True)
+        if IS_ANDROID:
+            # 前端会拿到这个路径，原生层再把它备份/导出到「下载」目录
+            return str(DATA_DIR)
         if sys.platform == "win32":
             os.startfile(str(DATA_DIR))  # type: ignore[attr-defined]
         elif sys.platform == "darwin":

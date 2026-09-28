@@ -1,0 +1,7 @@
+// Root build file: only declares the plugin versions used by :app.
+plugins {
+    id 'com.android.application' version '8.7.3' apply false
+    // Chaquopy embeds a real CPython interpreter plus the pure-stdlib backend
+    // of this project into the APK.
+    id 'com.chaquo.python' version '17.0.0' apply false
+}

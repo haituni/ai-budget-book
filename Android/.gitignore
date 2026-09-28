@@ -1,0 +1,22 @@
+# 工具链与构建缓存：体积很大，需要时用 tools/fetch-toolchain.ps1 重新下载
+toolchain/
+.gradle-home/
+.gradle/
+build/
+app/build/
+local.properties
+
+# 签名文件：只在本机使用，不进仓库
+keystore/
+
+# 注意：dist/ 故意不忽略。
+# 它装的是最终要传到手机上的安装包，被忽略后在某些文件视图里会整个消失，
+# 之前就是这样看不到 APK 的。想保持仓库干净的话，自行加回 dist/ 或 *.apk。
+
+# 由仓库根目录同步过来的源码副本；唯一真源是根目录的 core/ 与 ui/
+app/src/main/python/core/
+app/src/main/assets/ui/
+
+# 界面自检脚本的 Node 依赖
+tools/webui-test/node_modules/
+tools/webui-test/package-lock.json

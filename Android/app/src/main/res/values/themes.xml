@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 纯原生主题，不依赖 AndroidX / Material，尽量少拉依赖 -->
+    <style name="AppTheme" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">#f3f5f8</item>
+        <item name="android:statusBarColor">#172033</item>
+        <item name="android:navigationBarColor">#ffffff</item>
+    </style>
+</resources>

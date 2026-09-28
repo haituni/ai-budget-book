@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import base64
 import calendar
-import ctypes
 import html
 import json
 import re
@@ -25,6 +24,11 @@ import urllib.error
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta
+
+try:  # ctypes 只用于 Windows 的 DPAPI 加解密；Android / Linux 上会走 base64 回退
+    import ctypes
+except ImportError:  # pragma: no cover - 精简的移动端 Python 可能不带 ctypes
+    ctypes = None  # type: ignore[assignment]
 
 from . import intelligence, memory, repo, service
 from .db import (
@@ -73,11 +77,14 @@ _STATUS_TEXT = {
 # ------------------------------------------------------------------ 密钥加密
 
 
-class _DataBlob(ctypes.Structure):
-    _fields_ = [
-        ("cbData", ctypes.c_uint32),
-        ("pbData", ctypes.POINTER(ctypes.c_char)),
-    ]
+if ctypes is not None:
+    class _DataBlob(ctypes.Structure):
+        _fields_ = [
+            ("cbData", ctypes.c_uint32),
+            ("pbData", ctypes.POINTER(ctypes.c_char)),
+        ]
+else:  # pragma: no cover - Android / 精简 Python
+    _DataBlob = None
 
 
 def _dpapi(data: bytes, protect: bool) -> bytes:
@@ -85,7 +92,7 @@ def _dpapi(data: bytes, protect: bool) -> bytes:
 
     加密范围是「当前 Windows 账户」，所以拿到数据库文件也解不出明文。
     """
-    if sys.platform != "win32":
+    if ctypes is None or sys.platform != "win32":
         raise OSError("DPAPI 只在 Windows 上可用")
 
     crypt32 = ctypes.WinDLL("crypt32", use_last_error=True)

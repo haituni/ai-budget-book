@@ -1,0 +1,25 @@
+// Repositories are tried in order: China mirrors first, then the official
+// servers as a fallback. Only the Gradle plugin, Android Gradle plugin and
+// Chaquopy artifacts are fetched from here.
+pluginManagement {
+    repositories {
+        maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
+        maven { url 'https://maven.aliyun.com/repository/google' }
+        maven { url 'https://maven.aliyun.com/repository/public' }
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    repositories {
+        maven { url 'https://maven.aliyun.com/repository/google' }
+        maven { url 'https://maven.aliyun.com/repository/public' }
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.name = 'MonthlyLedger'
+include ':app'
