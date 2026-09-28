@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>月度账本</title>
+<style>
+/*__STYLES__*/
+</style>
+</head>
+<body>
+<div id="app" class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="logo">¥</div>
+      <div><h1>月度账本</h1><p>个人预算工作台</p></div>
+    </div>
+    <nav class="side-nav" id="tabs">
+      <button class="tab active" data-view="overview"><span class="nav-mark">概</span><span>概览</span></button>
+      <button class="tab" data-view="records"><span class="nav-mark">账</span><span>账单</span></button>
+      <button class="tab" data-view="manage"><span class="nav-mark">预</span><span>预算</span></button>
+      <button class="tab" data-view="ai"><span class="nav-mark">智</span><span>洞察</span></button>
+      <button class="tab" data-view="data"><span class="nav-mark">设</span><span>设置</span></button>
+    </nav>
+    <div class="sidebar-foot"><div><span class="status-dot"></span>数据保存在本机</div><small>AI 记账与智能复盘按需联网</small></div>
+  </aside>
+
+  <section class="workspace">
+    <header class="workspace-header">
+      <div class="page-context"><div class="page-kicker">PERSONAL FINANCE</div><h2 id="viewTitle">概览</h2><p id="viewSubtitle">掌握本月预算、支出和需要关注的变化</p></div>
+      <div class="header-actions">
+        <div class="month-picker"><button class="icon-btn" id="prevMonth" title="上一个月">‹</button><input type="month" id="monthInput" aria-label="当前月份"><button class="icon-btn" id="nextMonth" title="下一个月">›</button><button class="ghost-btn compact-btn" id="thisMonth">本月</button></div>
+        <button class="ghost-btn" id="btnQuickManualExpense">手动记账</button><button class="primary-btn" id="btnQuickSmartExpense">AI 记账</button>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="view active" id="view-overview">
+        <div class="quick-capture">
+          <div class="quick-capture-copy"><span class="eyebrow">快速记录</span><strong>用一句话记下刚刚发生的消费</strong><span>模型会拆分日期、金额和分类，保存前仍可逐项修改。</span></div>
+          <div class="quick-capture-form"><textarea id="homeSmartText" maxlength="1000" rows="2" placeholder="例如：今天食堂午饭 18，晚上打车 22"></textarea><button class="primary-btn" id="btnHomeSmartExpense">解析并确认</button></div>
+        </div>
+        <div class="alert-bar hidden" id="alertBar"></div><div class="kpis" id="kpiRow"></div><div class="smart-overview hidden" id="smartOverview"></div>
+        <div class="dashboard-grid">
+          <div class="panel dashboard-main-card"><div class="panel-head"><div><span class="eyebrow">预算进度</span><h2>分类预算</h2></div><span class="panel-tip" id="overviewTip"></span></div><div class="cat-list" id="categoryList"></div></div>
+          <div class="panel"><div class="panel-head"><div><span class="eyebrow">最新动态</span><h2>最近流水</h2></div><button class="link-btn" data-go-view="records">查看全部</button></div><div id="recentRecords" class="recent-list"></div></div>
+        </div>
+        <div class="overview-secondary-grid">
+          <div class="panel"><div class="panel-head"><div><span class="eyebrow">支出结构</span><h2>分类占比</h2></div></div><div class="pie-wrap" id="pieWrap"></div></div>
+          <div class="panel"><div class="panel-head"><div><span class="eyebrow">历史对照</span><h2>往月回顾</h2></div><span class="panel-tip" id="historyTip"></span></div><div id="historyList" class="history-list"></div></div>
+        </div>
+      </section>
+
+      <section class="view" id="view-records">
+        <div class="panel">
+          <div class="panel-head records-heading"><div><span class="eyebrow">TRANSACTIONS</span><h2>账单明细</h2><p class="section-desc">查看、筛选和修正每一笔消费记录。</p></div><div class="filters action-group"><button class="ghost-btn" id="btnAddExpense">手动记账</button><button class="primary-btn" id="btnSmartExpense">AI 记账</button></div></div>
+          <div class="filter-toolbar"><div class="seg" id="scopeSeg"><button class="seg-btn" data-scope="all">全部</button><button class="seg-btn active" data-scope="month">按月</button><button class="seg-btn" data-scope="day">按日</button></div><select id="filterMonth" class="select"></select><select id="filterDay" class="select hidden"></select><select id="filterCategory" class="select"></select></div>
+          <div id="recordsTable" class="table-scroll"></div>
+        </div>
+      </section>
+
+      <section class="view" id="view-manage">
+        <div class="budget-layout">
+          <div class="panel budget-main-panel"><div class="panel-head records-heading"><div><span class="eyebrow">BUDGET CENTER</span><h2>分类预算</h2><p class="section-desc">统一管理默认预算、当月额度和消费属性。</p></div><div class="filters action-group"><button class="ghost-btn" id="btnBudgetPlan">下月预算建议</button><button class="primary-btn" id="btnAddCategory">新增分类</button></div></div><div id="budgetTable" class="table-scroll"></div></div>
+          <div class="panel budget-rule-card"><div class="panel-head"><div><span class="eyebrow">提醒规则</span><h2>预算预警</h2></div></div><p class="section-desc">分类支出达到该比例时，概览会提示接近预算上限。</p><div class="threshold-value"><strong id="thresholdLabel">80%</strong><span>触发提醒</span></div><div class="threshold-row"><input type="range" id="thresholdRange" min="10" max="100" step="5"></div><div class="rule-note">超过 100% 时自动标记为已超预算。</div></div>
+        </div>
+      </section>
+
+      <section class="view" id="view-ai">
+        <div class="insight-layout">
+          <div class="panel ledger-panel"><div class="panel-head"><div><span class="eyebrow">快速查询</span><h2>账本问答</h2></div><span class="panel-tip">由当前大模型回答</span></div><p class="section-desc">问题与所选月份的结构化账本数据会发送至已配置的 AI 服务，由大模型回答消费、分类与趋势问题。</p><div class="ledger-ask-row"><input type="text" id="ledgerQuestion" maxlength="100" placeholder="例如：这个月为什么比上个月多花了？"><button class="primary-btn" id="btnAskLedger">问大模型</button></div><div id="ledgerAnswer" class="ledger-answer empty-ledger">回答将由大模型基于所选月份账本数据生成</div></div>
+          <div class="panel ai-main-panel"><div class="panel-head records-heading"><div><span class="eyebrow">MONTHLY REVIEW</span><h2>AI 月度复盘</h2><p class="section-desc">结合预算、流水和本地预测生成可执行的月度报告。</p></div><div class="filters action-group"><select id="aiMonthSelect" class="select"></select><button class="primary-btn" id="btnAiAnalyze">开始复盘</button></div></div><div id="aiStatus" class="ai-status"></div><div id="aiResult"></div></div>
+        </div>
+        <div class="panel"><div class="panel-head"><div><span class="eyebrow">ARCHIVE</span><h2>历史复盘</h2></div><span class="panel-tip" id="aiReportTip"></span></div><div id="aiReportList"></div></div>
+      </section>
+
+      <section class="view" id="view-data">
+        <div class="settings-grid">
+          <div class="panel"><div class="panel-head"><div><span class="eyebrow">AI SERVICE</span><h2>AI 服务设置</h2></div><button class="primary-btn" id="btnAiConfig">配置服务</button></div><div id="aiConfigInfo" class="info-list"></div><div class="privacy-note">AI 记账会发送输入文本和分类名称；月度复盘会发送所选月份的预算及流水备注。其它查询和统计保持本地运行。</div></div>
+          <div class="panel"><div class="panel-head"><div><span class="eyebrow">LOCAL DATA</span><h2>数据与备份</h2></div></div><div id="dataInfo" class="info-list"></div><div class="settings-actions"><button class="ghost-btn" id="btnOpenFolder">打开数据文件夹</button><button class="ghost-btn" id="btnExportAll">导出全部流水</button><button class="primary-btn" id="btnExportCurrent">导出当前筛选</button></div><p class="section-desc">CSV 使用 UTF-8 编码，Excel 可直接打开。复制数据库文件即可完成完整备份。</p></div>
+        </div>
+      </section>
+    </main>
+  </section>
+</div>
+<div id="modalRoot"></div><div id="toastRoot" class="toast-root"></div>
+<script>
+/*__APP_JS__*/
+</script>
+</body>
+</html>

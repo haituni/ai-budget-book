@@ -1,0 +1,46 @@
+# 用户账本数据：绝不入库（首次运行时程序会自动重建 dataset/）
+dataset/
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+
+# 备份与导出
+backups/
+*.csv
+*.xlsx
+
+# 打包产物
+build/
+dist/
+release/
+*.spec
+
+# Python 缓存与虚拟环境
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+
+# 本地密钥与配置
+.env
+.env.*
+*.pem
+*.key
+*.pfx
+*.p12
+secrets.json
+
+# 编辑器与系统文件
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 临时目录
+.packaging-test/
+.tmp/
