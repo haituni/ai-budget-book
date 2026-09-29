@@ -10,17 +10,61 @@
 </head>
 <body>
 <div id="app" class="app-shell">
+  <header class="titlebar pywebview-drag-region" id="titlebar">
+    <div class="titlebar-lead">
+      <div class="traffic-lights" id="trafficLights">
+        <button type="button" class="tl tl-close" id="winClose" title="关闭窗口" aria-label="关闭窗口">
+          <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3.3 3.3 8.7 8.7M8.7 3.3 3.3 8.7"/></svg>
+        </button>
+        <button type="button" class="tl tl-min" id="winMinimize" title="最小化" aria-label="最小化窗口">
+          <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3.2 6h5.6"/></svg>
+        </button>
+        <button type="button" class="tl tl-zoom" id="winZoom" title="缩放" aria-label="缩放窗口">
+          <svg viewBox="0 0 12 12" aria-hidden="true"><path d="M3.4 6h5.2M6 3.4v5.2"/></svg>
+        </button>
+      </div>
+      <button type="button" class="toolbar-btn sidebar-toggle" id="btnSidebarToggle" title="显示或隐藏边栏" aria-label="显示或隐藏边栏" aria-pressed="true">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="2.5" width="13" height="11" rx="2.5"/><path d="M6.5 2.5v11"/></svg>
+      </button>
+    </div>
+    <div class="titlebar-title" id="windowTitle">月度账本</div>
+    <div class="titlebar-trail">
+      <button class="toolbar-btn" id="btnQuickManualExpense" type="button">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M11.1 2.6 13.4 4.9 6.2 12.1l-3.2.8.8-3.2z"/><path d="M9.9 3.8l2.3 2.3"/></svg>
+        手动记账
+      </button>
+      <button class="toolbar-btn is-primary" id="btnQuickSmartExpense" type="button">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6.6 2.4 7.7 5.3l2.9 1.1-2.9 1.1-1.1 2.9-1.1-2.9L2.6 6.4l2.9-1.1z"/><path d="M12 9.4l.6 1.5 1.5.6-1.5.6-.6 1.5-.6-1.5-1.5-.6 1.5-.6z"/></svg>
+        AI 记账
+      </button>
+    </div>
+  </header>
   <aside class="sidebar">
     <div class="sidebar-brand">
       <div class="logo">¥</div>
       <div><h1>月度账本</h1><p>个人预算工作台</p></div>
     </div>
     <nav class="side-nav" id="tabs">
-      <button class="tab active" data-view="overview"><span class="nav-mark">概</span><span>概览</span></button>
-      <button class="tab" data-view="records"><span class="nav-mark">账</span><span>账单</span></button>
-      <button class="tab" data-view="manage"><span class="nav-mark">预</span><span>预算</span></button>
-      <button class="tab" data-view="ai"><span class="nav-mark">智</span><span>洞察</span></button>
-      <button class="tab" data-view="data"><span class="nav-mark">设</span><span>设置</span></button>
+      <button class="tab active" data-view="overview">
+        <span class="nav-mark"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.8 13V9.6M6.6 13V5.4M10.4 13V7.8M14.2 13V3.6"/></svg></span>
+        <span>概览</span>
+      </button>
+      <button class="tab" data-view="records">
+        <span class="nav-mark"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6.2 4.4h7M6.2 8h7M6.2 11.6h7"/><circle class="dot" cx="3.2" cy="4.4" r=".95"/><circle class="dot" cx="3.2" cy="8" r=".95"/><circle class="dot" cx="3.2" cy="11.6" r=".95"/></svg></span>
+        <span>账单</span>
+      </button>
+      <button class="tab" data-view="manage">
+        <span class="nav-mark"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2.4" y="4.2" width="11.2" height="7.9" rx="2"/><path d="M2.4 7.1h11.2"/><path d="M11 9.8h1.1"/></svg></span>
+        <span>预算</span>
+      </button>
+      <button class="tab" data-view="ai">
+        <span class="nav-mark"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M6.6 2.4 7.7 5.3l2.9 1.1-2.9 1.1-1.1 2.9-1.1-2.9L2.6 6.4l2.9-1.1z"/><path d="M12 9.4l.6 1.5 1.5.6-1.5.6-.6 1.5-.6-1.5-1.5-.6 1.5-.6z"/></svg></span>
+        <span>洞察</span>
+      </button>
+      <button class="tab" data-view="data">
+        <span class="nav-mark"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2.6 4.6h10.8M2.6 8h10.8M2.6 11.4h10.8"/><circle class="dot" cx="6.2" cy="4.6" r="1.35"/><circle class="dot" cx="10" cy="8" r="1.35"/><circle class="dot" cx="5.4" cy="11.4" r="1.35"/></svg></span>
+        <span>设置</span>
+      </button>
     </nav>
     <div class="sidebar-foot"><div><span class="status-dot"></span>数据保存在本机</div><small>AI 记账与智能复盘按需联网</small></div>
   </aside>
@@ -29,8 +73,7 @@
     <header class="workspace-header">
       <div class="page-context"><div class="page-kicker">PERSONAL FINANCE</div><h2 id="viewTitle">概览</h2><p id="viewSubtitle">掌握本月预算、支出和需要关注的变化</p></div>
       <div class="header-actions">
-        <div class="month-picker"><button class="icon-btn" id="prevMonth" title="上一个月">‹</button><input type="month" id="monthInput" aria-label="当前月份"><button class="icon-btn" id="nextMonth" title="下一个月">›</button><button class="ghost-btn compact-btn" id="thisMonth">本月</button></div>
-        <button class="ghost-btn" id="btnQuickManualExpense">手动记账</button><button class="primary-btn" id="btnQuickSmartExpense">AI 记账</button>
+        <div class="month-picker"><button class="icon-btn" id="prevMonth" title="上一个月" aria-label="上一个月"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M7.4 2.6 4 6l3.4 3.4"/></svg></button><input type="month" id="monthInput" aria-label="当前月份"><button class="icon-btn" id="nextMonth" title="下一个月" aria-label="下一个月"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M4.6 2.6 8 6l-3.4 3.4"/></svg></button><button class="ghost-btn compact-btn" id="thisMonth">本月</button></div>
       </div>
     </header>
 
@@ -82,7 +125,18 @@
       </section>
     </main>
   </section>
+  <div class="resize-layer" id="resizeLayer" aria-hidden="true">
+    <span class="rz rz-n" data-edge="n"></span>
+    <span class="rz rz-s" data-edge="s"></span>
+    <span class="rz rz-w" data-edge="w"></span>
+    <span class="rz rz-e" data-edge="e"></span>
+    <span class="rz rz-nw" data-edge="nw"></span>
+    <span class="rz rz-ne" data-edge="ne"></span>
+    <span class="rz rz-sw" data-edge="sw"></span>
+    <span class="rz rz-se" data-edge="se"></span>
+  </div>
 </div>
+<div id="contextMenuRoot" class="menu-root" hidden></div>
 <div id="modalRoot"></div><div id="toastRoot" class="toast-root"></div>
 <script>
 /*__APP_JS__*/

@@ -53,25 +53,57 @@ function renderKpis(ov) {
     </div>`;
 }
 
+/* 列表行里的操作按钮：线性小图标 + 原生提示，比一串彩色文字稳当得多 */
+const ROW_ICONS = {
+  edit: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M11.1 2.6 13.4 4.9 6.2 12.1l-3.2.8.8-3.2z"/><path d="M9.9 3.8l2.3 2.3"/></svg>',
+  remove: '<svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3.4 4.6h9.2"/><path d="M6.5 4.6V3.5a.9.9 0 0 1 .9-.9h1.2a.9.9 0 0 1 .9.9v1.1"/><path d="M4.6 4.6l.5 8a1.1 1.1 0 0 0 1.1 1.05h3.6A1.1 1.1 0 0 0 10.9 12.6l.5-8"/><path d="M6.9 7.1v4.1M9.1 7.1v4.1"/></svg>',
+};
+
+/* 界面上的提示/图标：统一用线性符号，彩色 emoji 在桌面版里太跳 */
+const UI_PATHS = {
+  alert: '<circle cx="8" cy="8" r="6.1"/><path d="M8 4.9v3.7M8 11.1h.01"/>',
+  warn: '<path d="M8 2.7 14.1 13H1.9z"/><path d="M8 6.6v3M8 11.5h.01"/>',
+  info: '<circle cx="8" cy="8" r="6.1"/><path d="M8 7.3v4.1M8 4.9h.01"/>',
+  folder: '<path d="M2.4 6.2a1.4 1.4 0 0 1 1.4-1.4h2.3l1.3 1.6h4.8a1.4 1.4 0 0 1 1.4 1.4v4.4a1.4 1.4 0 0 1-1.4 1.4H3.8a1.4 1.4 0 0 1-1.4-1.4z"/>',
+  bars: '<path d="M3.2 13V8.6M6.6 13V5.4M10 13V9.8M13.4 13V3.6"/>',
+  calendar: '<rect x="2.6" y="3.8" width="10.8" height="9.6" rx="1.7"/><path d="M2.6 6.7h10.8M5.7 2.4v2.4M10.3 2.4v2.4"/>',
+  receipt: '<path d="M4.2 2.6h7.6v11l-1.9-1.4-1.9 1.4-1.9-1.4-1.9 1.4z"/><path d="M6.3 6h3.4M6.3 8.7h3.4"/>',
+  sparkle: '<path d="M6.6 2.4 7.7 5.3l2.9 1.1-2.9 1.1-1.1 2.9-1.1-2.9L2.6 6.4l2.9-1.1z"/><path d="M12 9.4l.6 1.5 1.5.6-1.5.6-.6 1.5-.6-1.5-1.5-.6 1.5-.6z"/>',
+  compass: '<circle cx="8" cy="8" r="6.1"/><path d="M10.3 5.7 9 9 5.7 10.3 7 7z"/>',
+  search: '<circle cx="7.2" cy="7.2" r="4.2"/><path d="M10.3 10.3 13.8 13.8"/>',
+};
+
+const uiIcon = (name) =>
+  `<svg class="ui-icon" viewBox="0 0 16 16" aria-hidden="true">${UI_PATHS[name]}</svg>`;
+
+function rowAction(act, id, kind, label) {
+  const cls = kind === 'remove' ? 'row-action danger' : 'row-action';
+  return `<button class="${cls}" data-act="${act}" data-id="${id}" title="${esc(label)}" aria-label="${esc(label)}">${ROW_ICONS[kind]}</button>`;
+}
+
+function disabledRowAction(label) {
+  return `<button class="row-action danger" disabled title="${esc(label)}" aria-label="${esc(label)}">${ROW_ICONS.remove}</button>`;
+}
+
 function renderAlertBar(ov) {
   const bar = $('alertBar');
   const alerts = ov.alerts;
   const parts = [];
 
   if (alerts.over.length) {
-    parts.push({ cls: 'danger', icon: '⛔', html: `<b>已超预算：</b>${esc(alerts.over.join('、'))}` });
+    parts.push({ cls: 'danger', icon: uiIcon('alert'), html: `<b>已超预算：</b>${esc(alerts.over.join('、'))}` });
   }
   if (alerts.near.length) {
     parts.push({
       cls: 'warn',
-      icon: '⚠️',
+      icon: uiIcon('warn'),
       html: `<b>接近上限：</b>${esc(alerts.near.join('、'))}（已达到本月预算的 ${Math.round(ov.threshold * 100)}% 以上）`,
     });
   }
   if (alerts.unbudgeted.length) {
     parts.push({
       cls: 'warn',
-      icon: '💡',
+      icon: uiIcon('info'),
       html: `<b>未设预算却有支出：</b>${esc(alerts.unbudgeted.join('、'))}`,
     });
   }
@@ -94,13 +126,16 @@ function categoryRowHtml(item) {
   const ratio = item.budget > 0
     ? Math.min(item.spent / item.budget, 1)
     : (item.spent > 0 ? 1 : 0);
-  const fillClass = item.status === 'over' ? 'over' : (item.status === 'near' ? 'near' : '');
+  // 没设预算却有支出：进度条走红色，跟右边「超支」的红字保持一致
+  const fillClass = (item.status === 'over' || item.status === 'unbudgeted')
+    ? 'over'
+    : (item.status === 'near' ? 'near' : '');
   const remainHtml = item.remaining < 0
     ? `<span class="over-text">超支 ${money(-item.remaining)}</span>`
     : `剩余 <span class="strong">${money(item.remaining)}</span>`;
 
   return `
-    <div class="cat-row">
+    <div class="cat-row${item.id === state.selectedCategoryId ? ' selected' : ''}" data-id="${item.id}">
       <div class="cat-name">
         <span class="text">${esc(item.name)}</span>
         ${item.is_system ? '<span class="sys-tag">系统</span>' : ''}
@@ -123,7 +158,7 @@ function renderCategoryList(ov) {
   $('overviewTip').textContent = `统计月份：${monthLabel(ov.month)}`;
   const list = $('categoryList');
   if (!ov.categories.length) {
-    list.innerHTML = '<div class="empty"><span class="big">📁</span>还没有任何分类<br>到「预算」里新增一个吧</div>';
+    list.innerHTML = `<div class="empty"><span class="big">${uiIcon('folder')}</span>还没有任何分类<br>到「预算」里新增一个吧</div>`;
     return;
   }
   list.innerHTML = ov.categories.map(categoryRowHtml).join('');
@@ -166,7 +201,7 @@ function renderSmartOverview() {
   box.className = 'smart-overview';
   box.innerHTML = `
     <section class="smart-forecast ${risk ? 'risk' : 'safe'}">
-      <div class="smart-title"><span>🧭 ${isPast ? '智能复盘' : '月底智能预测'}</span><small>截至 ${esc(data.as_of)}</small></div>
+      <div class="smart-title"><span>${uiIcon('compass')}${isPast ? '智能复盘' : '月底智能预测'}</span><small>截至 ${esc(data.as_of)}</small></div>
       <div class="smart-forecast-main">
         <strong>${money(central)}</strong>
         <span>${isPast ? '最终支出' : `预测区间 ${money(low)}～${money(high)}`}</span>
@@ -178,7 +213,7 @@ function renderSmartOverview() {
       </div>
     </section>
     <section class="smart-alerts">
-      <div class="smart-title"><span>🔎 智能提醒</span><small>${anomalies.length ? `优先展示 ${anomalies.length} 项` : '当前无高优先级问题'}</small></div>
+      <div class="smart-title"><span>${uiIcon('search')}智能提醒</span><small>${anomalies.length ? `优先展示 ${anomalies.length} 项` : '当前无高优先级问题'}</small></div>
       <div class="smart-alert-list">${alertRows}</div>
     </section>`;
 }
@@ -207,7 +242,7 @@ function renderPie(ov) {
   const total = items.reduce((sum, item) => sum + item.value, 0);
 
   if (!items.length) {
-    wrap.innerHTML = '<div class="empty"><span class="big">📊</span>本月还没有消费记录<br>点「记一笔」开始记录吧</div>';
+    wrap.innerHTML = `<div class="empty"><span class="big">${uiIcon('bars')}</span>本月还没有消费记录<br>点「记一笔」开始记录吧</div>`;
     return;
   }
 
@@ -264,14 +299,14 @@ function renderRecentRecords() {
     return;
   }
   box.innerHTML = rows.map((row) => `
-    <div class="recent-row">
+    <div class="recent-row${row.id === state.selectedExpenseId ? ' selected' : ''}" data-id="${row.id}">
       <div class="recent-main">
         <strong title="${esc(row.note || row.category_name)}">${esc(row.note || row.category_name || '未填写备注')}</strong>
         <span>${esc(row.spent_on)} · ${esc(row.category_name)}</span>
       </div>
       <div class="recent-side">
         <span class="recent-amount">${money(row.amount)}</span>
-        <button class="link-btn" data-act="edit-expense" data-id="${row.id}">编辑</button>
+        ${rowAction('edit-expense', row.id, 'edit', '编辑')}
       </div>
     </div>`).join('');
 }
@@ -285,7 +320,7 @@ function renderHistory(data) {
   if (!months.length) {
     tip.textContent = '';
     box.innerHTML = '<div class="empty" style="padding:26px 12px">'
-      + `<span class="big">🗓️</span>${monthLabel(state.month)} 之前还没有消费记录<br>`
+      + `<span class="big">${uiIcon('calendar')}</span>${monthLabel(state.month)} 之前还没有消费记录<br>`
       + '记录几个月之后，这里会自动汇总</div>';
     return;
   }
@@ -389,20 +424,20 @@ function renderRecords() {
     const tip = scope === 'day' && !state.filter.day
       ? '还没有任何消费记录，先记一笔吧'
       : '点右上角「记一笔」新增';
-    box.innerHTML = `<div class="empty"><span class="big">🧾</span>${where}还没有符合条件的记录<br>${tip}</div>`;
+    box.innerHTML = `<div class="empty"><span class="big">${uiIcon('receipt')}</span>${where}还没有符合条件的记录<br>${tip}</div>`;
     return;
   }
 
   const total = rows.reduce((sum, r) => sum + Number(r.amount), 0);
   const body = rows.map((r) => `
-    <tr>
+    <tr class="${r.id === state.selectedExpenseId ? 'selected' : ''}" data-id="${r.id}">
       <td>${r.spent_on}</td>
       <td>${esc(r.category_name)}</td>
       <td class="num amount-strong">${money(r.amount)}</td>
       <td class="note" title="${esc(r.note)}">${r.note ? esc(r.note) : '<span class="muted-text">—</span>'}</td>
       <td class="ops">
-        <button class="link-btn" data-act="edit-expense" data-id="${r.id}">编辑</button>
-        <button class="link-btn danger" data-act="del-expense" data-id="${r.id}">删除</button>
+        ${rowAction('edit-expense', r.id, 'edit', '编辑')}
+        ${rowAction('del-expense', r.id, 'remove', '删除')}
       </td>
     </tr>`).join('');
 
@@ -414,7 +449,7 @@ function renderRecords() {
           <th style="width:140px">分类</th>
           <th class="num" style="width:120px">金额</th>
           <th>备注</th>
-          <th style="width:132px"></th>
+          <th style="width:88px"></th>
         </tr>
       </thead>
       <tbody>${body}</tbody>
@@ -458,17 +493,17 @@ function renderBudgetTable() {
       overrideTag = '<span class="override-tag" title="仅该月单独设置，不影响默认预算">本月单独</span>';
     }
     const delBtn = cat.is_system
-      ? '<button class="link-btn" disabled style="opacity:.4;cursor:not-allowed" title="系统默认分类不可删除">删除</button>'
-      : `<button class="link-btn danger" data-act="del-category" data-id="${cat.id}">删除</button>`;
+      ? disabledRowAction('系统默认分类不可删除')
+      : rowAction('del-category', cat.id, 'remove', '删除');
 
     return `
-      <tr>
+      <tr class="${cat.id === state.selectedCategoryId ? 'selected' : ''}" data-id="${cat.id}">
         <td><span class="amount-strong">${esc(cat.name)}</span>${sysTag}${typeTag}</td>
         <td class="num">${money(cat.monthly_budget)}</td>
         <td class="num">${money(monthBudget)}${overrideTag}</td>
         <td><span class="memory-summary">${memoryText}</span></td>
         <td class="ops">
-          <button class="link-btn" data-act="edit-category" data-id="${cat.id}">编辑</button>
+          ${rowAction('edit-category', cat.id, 'edit', '编辑')}
           ${delBtn}
         </td>
       </tr>`;
@@ -482,7 +517,7 @@ function renderBudgetTable() {
           <th class="num" style="width:150px">默认月度预算</th>
           <th class="num" style="width:180px">${monthLabel(state.month)} 预算</th>
           <th style="width:230px">个人消费画像</th>
-          <th style="width:152px"></th>
+          <th style="width:96px"></th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>
@@ -767,13 +802,13 @@ function renderAi() {
   if (latest) {
     result.innerHTML = `
       <div class="ai-report-head">${aiReportHeadHtml(latest)}
-        <button class="link-btn danger" data-act="del-report" data-id="${latest.id}">删除这份报告</button>
+        ${rowAction('del-report', latest.id, 'remove', '删除这份报告')}
       </div>
       <div class="ai-report-stats">${aiReportStatsHtml(latest.stats)}</div>
       ${aiVisualsHtml(latest.stats)}
       <div class="ai-md">${mdToHtml(latest.content)}</div>`;
   } else {
-    result.innerHTML = '<div class="empty"><span class="big">🤖</span>'
+    result.innerHTML = `<div class="empty"><span class="big">${uiIcon('sparkle')}</span>`
       + `${monthLabel(month)}还没有复盘报告<br>`
       + `${isFuture ? '等这个月开始了再来' : (cfg.ready ? '点右上角「开始复盘」生成一份' : '点右上角「开始复盘」生成离线规则报告')}</div>`;
   }
@@ -790,12 +825,12 @@ function renderAi() {
   list.innerHTML = reports.map((report) => {
     const expanded = aiExpandedId === report.id;
     return `
-      <div class="ai-report-item${expanded ? ' expanded' : ''}">
+      <div class="ai-report-item${expanded ? ' expanded' : ''}${report.id === state.selectedReportId ? ' selected' : ''}" data-id="${report.id}">
         <div class="ai-report-item-head">
           ${aiReportHeadHtml(report, { compact: true })}
           <span class="ai-report-ops">
             <button class="link-btn" data-act="toggle-report" data-id="${report.id}">${expanded ? '收起' : '查看'}</button>
-            <button class="link-btn danger" data-act="del-report" data-id="${report.id}">删除</button>
+            ${rowAction('del-report', report.id, 'remove', '删除')}
           </span>
         </div>
         ${expanded ? `${aiVisualsHtml(report.stats)}<div class="ai-md">${mdToHtml(report.content)}</div>` : ''}

@@ -4,9 +4,12 @@
 
 > 无需注册账号，无需部署服务器。数据默认只保存在你的电脑中；只有你主动使用 AI 记账、账本问答或联网 AI 复盘时，程序才会调用你自己配置的模型接口。
 
-> 本文截图由 `tests/generate_readme_screenshots.py` 自动生成。脚本会在系统临时目录创建独立的 `readme-demo.db` 并写入演示数据，不会读取或修改正式账本 `dataset/budget.db`。
+> 本文截图由 `tests/generate_readme_screenshots.py` 自动生成。脚本会在系统临时目录创建独立的 `readme-demo.db` 并写入演示数据，不会读取或修改正式账本 `dataset/budget.db`。每个页面都会生成浅色和深色两张，README 会根据你当前的 GitHub 主题自动选用。
 
-![月度预算记账本总览](docs/新版-概览.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/新版-概览-dark.png">
+  <img alt="月度预算记账本总览" src="docs/新版-概览.png">
+</picture>
 
 ## 适合谁
 
@@ -28,13 +31,19 @@
 - 智能提醒：识别疑似重复流水、异常大额消费、消费频率突增等情况
 - 月份切换：可查看任意历史月份，各月份独立统计
 
-![月度总览](docs/新版-概览.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/新版-概览-dark.png">
+  <img alt="月度总览" src="docs/新版-概览.png">
+</picture>
 
 ### 记一笔消费
 
 每笔消费包含日期、分类、金额和可选备注。保存后，总览、预算余额和图表会立即更新。
 
-![手动记账](docs/新版-手动记账.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/新版-手动记账-dark.png">
+  <img alt="手动记账" src="docs/新版-手动记账.png">
+</picture>
 
 还支持可选的 **AI 记账**：输入“今晚食堂 18，昨天打车 22”，模型会拆成多笔待确认记录。日期、分类、金额和备注都能修改，只有点击确认后才会写入账本。
 
@@ -50,7 +59,10 @@
 - 按分类：只看某个消费分类
 - 自动统计当前筛选结果的笔数和金额
 
-![消费流水](docs/新版-账单.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/新版-账单-dark.png">
+  <img alt="消费流水" src="docs/新版-账单.png">
+</picture>
 
 ### 分类与预算
 
@@ -64,7 +76,10 @@
 - 删除分类时，历史流水会转移到系统分类“其他”，不会直接丢失
 - 根据历史消费生成下月预算建议
 
-![分类与预算](docs/新版-预算.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/新版-预算-dark.png">
+  <img alt="分类与预算" src="docs/新版-预算.png">
+</picture>
 
 ### 洞察与月度复盘
 
@@ -79,7 +94,10 @@
 
 联网分析只在你主动点击相关按钮时发生。流水备注可能随分析数据一并发送给你选择的模型服务商，因此不要在备注里填写身份证号、银行卡号、密码等敏感信息。
 
-![洞察与月度复盘](docs/新版-洞察.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/新版-洞察-dark.png">
+  <img alt="洞察与月度复盘" src="docs/新版-洞察.png">
+</picture>
 
 ### 本地数据与备份
 
@@ -97,7 +115,32 @@ dataset/budget.db
 - 可导出全部流水或当前筛选结果为 CSV
 - CSV 使用 UTF-8 BOM 编码，通常可直接用 Excel 打开
 
-![数据与设置](docs/新版-设置.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/新版-设置-dark.png">
+  <img alt="数据与设置" src="docs/新版-设置.png">
+</picture>
+
+### 界面与快捷键
+
+桌面版按 macOS 的习惯做了一整套自绘窗口：无边框窗口 + 自绘标题栏，左上角是红黄绿三个窗口按钮，中间是窗口标题，右侧是「手动记账 / AI 记账」。界面跟随系统深浅色（系统是深色就是深色），列表支持单击选中、双击编辑和右键菜单。
+
+- 拖动标题栏可以移动窗口；拖窗口的四边或四角可以改大小
+- 双击标题栏 = 缩放（最大化 / 还原）
+- 右键任意一行流水或分类，会弹出「编辑 / 复制备注 / 删除」这类上下文菜单
+- 列表行：单击选中（选中的行是系统蓝底），`↑` `↓` 换行，`回车` 或双击打开编辑
+- 弹窗里 `Esc` 取消、`回车` 直接保存
+
+| 快捷键 | 作用 |
+| --- | --- |
+| `Ctrl + N` | AI 记账（一次输入多笔） |
+| `Ctrl + 1` ~ `Ctrl + 5` | 依次切到 概览 / 账单 / 预算 / 洞察 / 设置 |
+| `Ctrl + ,` | 打开「设置」 |
+| `Ctrl + W` | 关闭窗口 |
+| `Ctrl + M` | 最小化窗口 |
+| `Ctrl + Alt + S` | 收起 / 展开侧边栏 |
+| `Ctrl + 回车` | 在首页的快速记录框里直接解析 |
+
+> 如果自绘标题栏在你的电脑上表现不正常（比如远程桌面里拖不动窗口），先设置环境变量 `LEDGER_NATIVE_FRAME=1` 再启动，程序会退回系统自带的标题栏。
 
 ---
 
@@ -226,8 +269,8 @@ python app.py
 
 1. 打开“账单”页面。
 2. 用“全部 / 按月 / 按日”和分类下拉框筛选。
-3. 点击某条流水右侧的“编辑”进行修改。
-4. 点击“删除”时会出现二次确认，确认后才会删除。
+3. 点某条流水右侧的铅笔图标修改，或者直接双击这一行；右键那一行也会弹出同样的菜单。
+4. 点垃圾桶图标删除时会出现二次确认，确认后才会删除。
 
 ## 4. 定期检查
 
@@ -332,6 +375,17 @@ python -m pip install pywebview
 
 安装或修复 Microsoft Edge WebView2 Runtime，然后重启电脑和程序。
 
+## 窗口没有红黄绿按钮，或者拖不动窗口
+
+桌面版默认使用自绘的无边框窗口。如果它在某些环境里表现不正常（远程桌面、老版本 WebView2、外接显示器切换后），可以在项目目录里先设置环境变量再启动，退回系统自带的标题栏：
+
+```bat
+set LEDGER_NATIVE_FRAME=1
+python app.py
+```
+
+这种模式下窗口外观是普通的 Windows 窗口，其它功能完全一样。
+
 ## AI 记账或账本问答不可用
 
 依次检查 API Key、接口地址、模型名、联网 AI 开关、网络连接和账户余额。不配置 AI 时，手动记账、预算、统计、CSV、自动备份和本地规则复盘仍可正常使用。
@@ -366,7 +420,7 @@ python -m unittest discover -s tests -p "test_*.py"
 python tests\generate_readme_screenshots.py
 ```
 
-该脚本会先设置独立的 `BUDGET_DB_PATH`，生成完截图后自动删除临时数据库和浏览器配置。
+该脚本会先设置独立的 `BUDGET_DB_PATH`，生成完截图后自动删除临时数据库和浏览器配置。它会给每个页面生成浅色、深色两张（例如 `docs/新版-概览.png` 与 `docs/新版-概览-dark.png`），README 用 `<picture>` 按浏览者的主题自动选用。
 
 调试时建议使用独立数据库，避免改动正式账本：
 
@@ -403,5 +457,6 @@ cost/
 - pywebview + Microsoft Edge WebView2
 - SQLite
 - 原生 HTML、CSS、JavaScript
+- 自绘无边框窗口：macOS 风格标题栏、边缘拖拽缩放、跟随系统深浅色
 - 不启动本地 HTTP 服务，不占用端口
 - 普通记账功能不需要联网

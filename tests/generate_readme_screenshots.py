@@ -121,15 +121,35 @@ def seed_demo_data() -> dict[str, object]:
     }
 
 
-def build_page(payloads: dict[str, object], view: str) -> str:
+DARK_MEDIA = "@media (prefers-color-scheme: dark)"
+
+
+def build_page(payloads: dict[str, object], view: str, theme: str = "light") -> str:
     ui_dir = ROOT / "ui"
     html = (ui_dir / "index.html").read_text(encoding="utf-8")
     css = (ui_dir / "styles.css").read_text(encoding="utf-8")
     css += "\n*{animation:none!important;transition:none!important;}"
+    # 界面跟随系统深浅色。截图要两套都稳定产出，所以直接把那条媒体查询
+    # 钉死：浅色时让它永不命中，深色时让它无条件命中，与跑脚本的机器无关。
+    css = css.replace(
+        DARK_MEDIA,
+        "@media (min-width: 0px)" if theme == "dark" else "@media (min-width: 99999px)",
+    )
     js = "\n\n".join(
         (ui_dir / "js" / name).read_text(encoding="utf-8")
         for name in ("00-util.js", "10-render.js", "20-forms.js", "30-boot.js")
     )
+    # 桌面版是自绘标题栏：真机上是 pywebview 的 window_shell 接口告诉前端，
+    # 截图里没有后端，所以这里补一份，不然截图会缺红黄绿按钮和工具栏。
+    payloads = {
+        **payloads,
+        "window_shell": {
+            "chrome": True,
+            "zoomed": False,
+            "min_width": 860,
+            "min_height": 600,
+        },
+    }
     mock = (
         "const payloads=" + json.dumps(payloads, ensure_ascii=False) + ";"
         "window.pywebview={api:new Proxy({}, {get:function(_,name){"
@@ -142,6 +162,8 @@ def build_page(payloads: dict[str, object], view: str) -> str:
         action = "switchView(" + json.dumps(view) + ");"
     after_boot = (
         "setTimeout(function(){" + action
+        # 无头截图里窗口拿不到焦点，红黄绿会画成灰点；README 要的是"正在用"的样子
+        + "document.body.classList.remove('window-blurred');"
         + "document.documentElement.scrollTop=0;document.body.scrollTop=0;},900);"
     )
     return html.replace("/*__STYLES__*/", css).replace(
@@ -199,18 +221,27 @@ def main() -> None:
 
         payloads = seed_demo_data()
         shots = {
-            "overview": "新版-概览.png",
-            "records": "新版-账单.png",
-            "manual": "新版-手动记账.png",
-            "manage": "新版-预算.png",
-            "ai": "新版-洞察.png",
-            "data": "新版-设置.png",
+            "overview": "新版-概览",
+            "records": "新版-账单",
+            "manual": "新版-手动记账",
+            "manage": "新版-预算",
+            "ai": "新版-洞察",
+            "data": "新版-设置",
         }
-        for view, filename in shots.items():
-            html_path = temp_dir / f"{view}.html"
-            html_path.write_text(build_page(payloads, view), encoding="utf-8")
-            capture(edge, html_path, DOCS / filename, temp_dir / f"edge-{view}")
-            print(f"generated docs/{filename}")
+        # 每个页面出两套：浅色给 README 的浅色主题，深色给深色主题
+        for view, stem in shots.items():
+            for theme, suffix in (("light", ""), ("dark", "-dark")):
+                html_path = temp_dir / f"{view}-{theme}.html"
+                html_path.write_text(
+                    build_page(payloads, view, theme), encoding="utf-8"
+                )
+                capture(
+                    edge,
+                    html_path,
+                    DOCS / f"{stem}{suffix}.png",
+                    temp_dir / f"edge-{view}-{theme}",
+                )
+                print(f"generated docs/{stem}{suffix}.png")
 
         print(f"demo database was isolated at: {demo_db}")
         print("temporary database and browser profiles have been removed")

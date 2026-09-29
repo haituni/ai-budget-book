@@ -350,7 +350,7 @@ async function openMonthBudgetModal(categoryId) {
       </div>
       <div class="field">
         <label style="display:flex;gap:8px;align-items:center;font-weight:500">
-          <input type="checkbox" id="mUseDefault" style="width:auto" ${detail.budget_is_override ? '' : 'checked'}>
+          <input type="checkbox" id="mUseDefault" ${detail.budget_is_override ? '' : 'checked'}>
           ${archived ? '改用当前默认预算' : '沿用默认预算'}（${money(cat.monthly_budget)}）
         </label>
         <span class="desc">${archived
@@ -465,7 +465,7 @@ async function openAiConfigModal() {
       </div>
       <div class="field">
         <label style="display:flex;gap:8px;align-items:center;font-weight:500">
-          <input type="checkbox" id="aEnabled" style="width:auto" ${cfg.enabled ? 'checked' : ''}>
+          <input type="checkbox" id="aEnabled" ${cfg.enabled ? 'checked' : ''}>
           启用联网 AI
         </label>
         <span class="desc">关掉后，AI 记账和 AI 月度复盘都不会发送联网请求。</span>
@@ -562,4 +562,77 @@ async function deleteAiReportFlow(report) {
   } catch (err) {
     toast(err.message, 'err');
   }
+}
+
+/* ==================================================================
+   选中行与右键菜单
+
+   macOS 的列表基本都是这一套：单击选中（↑↓ 换行、回车打开编辑、双击直接编辑）、
+   右键弹出上下文菜单。这里把三种列表（流水 / 分类 / 复盘报告）共用的部分抽出来。
+   ================================================================== */
+
+/** 选中某一行：只切类名，不重排 DOM，避免滚动位置跳掉。 */
+function selectRow(container, id, property) {
+  state[property] = id;
+  document.querySelectorAll(`${container} .selected`)
+    .forEach((el) => el.classList.remove('selected'));
+  const row = document.querySelector(`${container} [data-id="${id}"]`);
+  if (row) row.classList.add('selected');
+  return row;
+}
+
+function expenseMenuItems(row) {
+  return [
+    { label: '编辑…', run: () => openExpenseModal(row) },
+    {
+      label: '复制备注',
+      disabled: !String(row.note || '').trim(),
+      run: () => copyText(row.note, '已复制备注'),
+    },
+    { separator: true },
+    { label: '删除…', danger: true, run: () => deleteExpenseFlow(row) },
+  ];
+}
+
+function categoryMenuItems(item) {
+  const cat = state.categories.find((c) => c.id === item.id);
+  const items = [{ label: '调整本月预算…', run: () => openMonthBudgetModal(item.id) }];
+  if (!cat) return items;
+  items.push({ label: '编辑分类…', run: () => openCategoryModal(cat) });
+  items.push({ separator: true });
+  items.push(cat.is_system
+    ? { label: '系统分类不可删除', disabled: true }
+    : { label: '删除分类…', danger: true, run: () => deleteCategoryFlow(cat) });
+  return items;
+}
+
+function budgetMenuItems(cat) {
+  return [
+    { label: '编辑分类…', run: () => openCategoryModal(cat) },
+    { label: '调整本月预算…', disabled: true },
+    { separator: true },
+    cat.is_system
+      ? { label: '系统分类不可删除', disabled: true }
+      : { label: '删除分类…', danger: true, run: () => deleteCategoryFlow(cat) },
+  ];
+}
+
+function reportMenuItems(report) {
+  const expanded = aiExpandedId === report.id;
+  return [
+    {
+      label: expanded ? '收起' : '查看',
+      run: () => {
+        aiExpandedId = expanded ? null : report.id;
+        renderAi();
+      },
+    },
+    {
+      label: '复制报告正文',
+      disabled: !String(report.content || '').trim(),
+      run: () => copyText(report.content, '已复制报告正文'),
+    },
+    { separator: true },
+    { label: '删除…', danger: true, run: () => deleteAiReportFlow(report) },
+  ];
 }

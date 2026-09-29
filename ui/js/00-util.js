@@ -49,6 +49,10 @@ const state = {
   personalMemory: [],
   records: [],
   recentRecords: [],
+  // 列表里选中的那一行（单击选中、↑↓ 换行、回车编辑、右键弹菜单）
+  selectedExpenseId: null,
+  selectedCategoryId: null,
+  selectedReportId: null,
   info: null,
   days: [],
   threshold: 0.8,
@@ -187,7 +191,7 @@ function confirmModal(options) {
         <div class="modal-body"><div class="modal-message">${messageHtml}</div></div>
         <div class="modal-foot">
           <button class="ghost-btn" data-act="cancel">取消</button>
-          <button class="primary-btn" data-act="ok"${danger ? ' style="background:var(--over)"' : ''}>${esc(confirmText)}</button>
+          <button class="primary-btn${danger ? ' danger' : ''}" data-act="ok">${esc(confirmText)}</button>
         </div>
       </div>`;
     document.body.appendChild(mask);
@@ -212,6 +216,135 @@ function confirmModal(options) {
     mask.querySelector('[data-act="cancel"]').onclick = () => finish(false);
     mask.querySelector('[data-act="ok"]').onclick = () => finish(true);
   });
+}
+
+/* ---------------------------------------------------------- 右键菜单 */
+
+// 菜单容器直接写在 index.html 里（和 #modalRoot / #toastRoot 一样），
+// 右键时只换内容和位置，不再临时造 DOM
+let contextMenu = null;
+
+function closeContextMenu() {
+  if (!contextMenu) return;
+  contextMenu.hidden = true;
+  contextMenu.innerHTML = '';
+  contextMenu.style.left = '';
+  contextMenu.style.top = '';
+  contextMenu = null;
+  document.removeEventListener('mousedown', onMenuOutside, true);
+  document.removeEventListener('keydown', onMenuKey, true);
+  window.removeEventListener('blur', closeContextMenu);
+  window.removeEventListener('resize', closeContextMenu);
+}
+
+function onMenuOutside(event) {
+  if (contextMenu && !contextMenu.contains(event.target)) closeContextMenu();
+}
+
+/** ↑↓ 换项、回车激活、Esc 关闭：macOS 菜单该有的键盘操作。 */
+function onMenuKey(event) {
+  if (!contextMenu) return;
+  const items = Array.from(contextMenu.querySelectorAll('.menu-item:not(:disabled)'));
+  const index = items.indexOf(document.activeElement);
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    closeContextMenu();
+  } else if (event.key === 'ArrowDown') {
+    event.preventDefault();
+    (items[Math.min(index + 1, items.length - 1)] || items[0]).focus();
+  } else if (event.key === 'ArrowUp') {
+    event.preventDefault();
+    (items[Math.max(index - 1, 0)] || items[0]).focus();
+  } else if (event.key === 'Enter' && index >= 0) {
+    event.preventDefault();
+    items[index].click();
+  }
+}
+
+/**
+ * macOS 风格的上下文菜单。
+ * items: [{ label, run, danger, disabled } | { separator: true }]
+ */
+function showContextMenu(event, items) {
+  closeContextMenu();
+  const list = items.filter(Boolean);
+  if (!list.length) return;
+
+  const root = $('contextMenuRoot');
+  if (!root) return;
+  root.innerHTML = `<div class="context-menu" role="menu">${list.map((item, index) => (item.separator
+    ? '<div class="menu-sep"></div>'
+    : `<button type="button" class="menu-item${item.danger ? ' danger' : ''}"`
+      + ` role="menuitem" data-index="${index}"${item.disabled ? ' disabled' : ''}>`
+      + `${esc(item.label)}</button>`)).join('')}</div>`;
+  root.hidden = false;
+  const menu = root.firstElementChild;
+
+  // 贴着指针放，靠近窗口边缘就翻到里面来
+  const box = menu.getBoundingClientRect();
+  const margin = 8;
+  const x = Math.min(event.clientX, window.innerWidth - box.width - margin);
+  const y = Math.min(event.clientY, window.innerHeight - box.height - margin);
+  root.style.left = `${Math.max(margin, x)}px`;
+  root.style.top = `${Math.max(margin, y)}px`;
+  contextMenu = root;
+
+  menu.addEventListener('click', (clickEvent) => {
+    const button = clickEvent.target.closest('.menu-item');
+    if (!button || button.disabled) return;
+    const item = list[Number(button.dataset.index)];
+    closeContextMenu();
+    if (item && typeof item.run === 'function') item.run();
+  });
+
+  const first = menu.querySelector('.menu-item:not(:disabled)');
+  if (first) first.focus();
+
+  document.addEventListener('mousedown', onMenuOutside, true);
+  document.addEventListener('keydown', onMenuKey, true);
+  window.addEventListener('blur', closeContextMenu);
+  window.addEventListener('resize', closeContextMenu);
+}
+
+/** 复制文本：优先用剪贴板接口，拿不到就退回临时文本框。 */
+async function copyText(text, okMessage) {
+  const value = String(text === null || text === undefined ? '' : text);
+  if (!value.trim()) {
+    toast('这里没有可复制的内容', 'err');
+    return;
+  }
+  const fallback = () => {
+    const box = document.createElement('textarea');
+    box.value = value;
+    box.setAttribute('readonly', 'readonly');
+    box.style.position = 'fixed';
+    box.style.top = '-1000px';
+    document.body.appendChild(box);
+    box.select();
+    document.execCommand('copy');
+    box.remove();
+  };
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      // 有些环境里剪贴板接口会一直不返回（权限弹窗没关掉），给个超时兜底
+      await Promise.race([
+        navigator.clipboard.writeText(value),
+        new Promise((resolve, reject) => {
+          setTimeout(() => reject(new Error('剪贴板超时')), 700);
+        }),
+      ]);
+    } else {
+      fallback();
+    }
+    toast(okMessage || '已复制', 'ok');
+  } catch (err) {
+    try {
+      fallback();
+      toast(okMessage || '已复制', 'ok');
+    } catch (fallbackError) {
+      toast('复制失败，可能被系统限制了', 'err');
+    }
+  }
 }
 
 /* ---------------------------------------------------------- 数据加载 */
